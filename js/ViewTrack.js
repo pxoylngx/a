@@ -67,16 +67,22 @@ function MoveOnMap()
 					
 					if (NowPoly && NowPoly.Text2)
 						NowPoly.Text2.setMap(map);
-					NowPoly = GetPoly(paths[NowPath].subpaths[NowSubpath], true);
-					NowPoly.setPath([ paths[NowPath].subpaths[NowSubpath].points[0] ]);
+					NowPoly = GetPoly(paths[NowPath].subpaths[NowSubpath], paths.length == 1);
+					NowPoly.setPath([ paths[NowPath].subpaths[NowSubpath].points[0], paths[NowPath].subpaths[NowSubpath].points[0] ]);
 					if (NowPoly && NowPoly.Text2)
 						NowPoly.Text2.setMap(null);
 					
+					// 屏幕越大，等级越大（比例尺越大）
 					var rate = MapWidth / STANDARD_MAP_WIDTH;
 					var lgrate = Math.log2(rate);
-					
-					// 屏幕越大，等级越大（比例尺越大）
-					map.setZoom(ZOOM_VIEW[paths[NowPath].subpaths[NowSubpath].type] + lgrate);
+					if (paths.length == 1)
+					{
+						map.setZoom(ZOOM_VIEW[paths[NowPath].subpaths[NowSubpath].type] + lgrate);
+					}
+					else
+					{
+						map.setZoom(11 + lgrate);
+					}
 					
 					var icon1 = new AMap.Icon(
 					{
@@ -89,15 +95,22 @@ function MoveOnMap()
 				else
 				{			
 					var d = GetDis(paths[NowPath].subpaths[NowSubpath].points[NowPoint], paths[NowPath].subpaths[NowSubpath].points[NowPoint - 1]);
-					var dt = d / (MOVE_SPEED[paths[NowPath].subpaths[NowSubpath].type] * 1000 / 3600000) / 60;
+					// 8小时→4分钟（1条轨迹时）
+					var dt = d / (MOVE_SPEED[paths[NowPath].subpaths[NowSubpath].type] * 1000 / 3600000) / 120;
+					
+					var lgrate = Math.log2(paths.length + 1) / paths.length;
+					dt *= lgrate;
+					
 					//console.log(d, dt, MOVE_SPEED[paths[NowPath].subpaths[NowSubpath].type]);
 					time -= dt;
 					
 					var arr = NowPoly.getPath();
 					if (time > 0)
 					{
+						arr[arr.length - 1] = paths[NowPath].subpaths[NowSubpath].points[NowPoint];
 						arr[arr.length] = paths[NowPath].subpaths[NowSubpath].points[NowPoint];
 						
+						//console.log(arr);
 						StartDate = StartDate + dt;
 					}
 					else
@@ -107,7 +120,7 @@ function MoveOnMap()
 						var p1 = paths[NowPath].subpaths[NowSubpath].points[NowPoint];
 						var p2 = paths[NowPath].subpaths[NowSubpath].points[NowPoint - 1];
 						var p = [ p1.lng * rate + p2.lng * (1 - rate), p1.lat * rate + p2.lat * (1 - rate) ];
-						arr[arr.length] = p;
+						arr[arr.length - 1] = p;
 						
 						//console.log(rate, p1, p2, p, arr);
 						NowPoint--;
@@ -127,9 +140,9 @@ function MoveOnMap()
 				}							
 			}
 			
-			var now2 = new Date().getTime();
-			var time2 = now2 - now; // ms	
-			setTimeout(MoveOnce, time2 * 5);
+			//var now2 = new Date().getTime();
+			//var time2 = now2 - now; // ms	
+			setTimeout(MoveOnce, 40);
 		}
 		
 		setTimeout(MoveOnce, 40);
