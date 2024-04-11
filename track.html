@@ -541,8 +541,12 @@
 			
 			function GeoCoderCallBack(data)
 			{
-				document.getElementById("text").value = data.district + data.street + toYYYYMMDD(paths[0].time) + "(" + (data.lng + Math.random() * 0.000001).toFixed(9) + "," + (data.lat + Math.random() * 0.000001).toFixed(9) + ")";
-				document.getElementById("text").setAttribute("value", document.getElementById("text").value);
+				AMap.convertFrom([data.lng, data.lat], 'gps', function (status, result) {
+					//console.log(data, result);
+					var lng1 = data.lng * 2 - result.locations[0].lng + Math.random() * 0.000001;
+					var lat1 = data.lat * 2 - result.locations[0].lat + Math.random() * 0.000001;
+					document.getElementById("text").value = data.district + data.street + toYYYYMMDD(paths[0].time) + "(" + lng1.toFixed(9) + "," + lat1.toFixed(9) + ")";					
+				});
 			}
 			
 			function GetWayDis(p1, p2)
@@ -893,7 +897,7 @@
 						}
 						else
 						{
-							console.log('步行路线数据查询失败' + result);
+							//console.log('步行路线数据查询失败' + result);
 						}
 					});
 				}
@@ -1038,7 +1042,7 @@
 								}
 								else
 								{
-									console.log('步行路线数据查询失败' + result);
+									//console.log('步行路线数据查询失败' + result);
 								}
 							});
 						}
@@ -1200,87 +1204,92 @@
 				var search = new AMap.PlaceSearch(
 				{
 					pageSize:50,
-					type:"公交车站|地铁站",
+					//type:"公交车站|地铁站",
 				});
 				limitDis = 800;
-				search.searchNearBy("站", center, limitDis, function(status, result)
+				var list = ["公交站", "地铁站", "码头"];
+				for (var listid = 0; listid < list.length; listid++)
 				{
-					//console.log(status, result);
-					if (!result.poiList)
-						return;
-					
-					var count1 = result.poiList.pois.length;
-					for (var i = 0; i < count1; i++)
+					search.searchNearBy(list[listid], center, limitDis, function(status, result)
 					{
-						var ri = result.poiList.pois[i];
-						//console.log(ri);
-						var ss = new AMap.StationSearch();
-						ss.searchById(ri.id, function(status, result)
+						//console.log(status, result);
+						if (!result.poiList)
+							return;
+						
+						var count1 = result.poiList.pois.length;
+						for (var i = 0; i < count1; i++)
 						{
-							//console.log(status, result);
-							for (var j = 0; j < result.stationInfo[0].buslines.length; j++)//
+							var ri = result.poiList.pois[i];
+							//console.log(ri);
+							var ss = new AMap.StationSearch();
+							ss.searchById(ri.id, function(status, result)
 							{
-								var line = result.stationInfo[0].buslines[j];
-								if (blss[line.id] == null)
+								//console.log(status, result);
+								for (var j = 0; j < result.stationInfo[0].buslines.length; j++)//
 								{
-									blss[line.id] = true;
-									var ls = new AMap.LineSearch(
+									var line = result.stationInfo[0].buslines[j];
+									if (blss[line.id] == null)
 									{
-										extensions:"all",
-									});
-									ls.searchById(line.id, function(status, result)
-									{
-										if (!result.lineInfo)
-											return;
-									
-										var info = result.lineInfo[0];
-										//console.log(status, result);
-										if (parseInt(info.status) != 1)
-											return;
-										//console.log(info);
-										var name = CutName(info.name);
-										if (name.length > 15)
-											return;
-										//var p1 = parseInt(info.basic_price);
-										//if (p1 == 0)
-										//	return;
-										var p2 = parseInt(info.total_price);
-										//if (p2 == 0)
-										//	return;
-										var color = "#ff0000";
-										if (p2 == 0)
-											p2 = 20;
-										if (p2 <= 4)
-											color = "#aa00aa";
-										if (p2 <= 3)
-											color = "#0000ff";
-										if (p2 <= 2)
-											color = "#00aaaa";
-										if (p2 <= 1)
-											color = "#00ff00";
-											
-										var poly = new AMap.Polyline(
+										blss[line.id] = true;
+										var ls = new AMap.LineSearch(
 										{
-											path:info.path,
-											strokeColor: color,
-											strokeOpacity: 0.8,
-											zIndex:60 - p2,
+											extensions:"all",
 										});
-										poly.setMap(map);
-										var text = new AMap.Text(
+										ls.searchById(line.id, function(status, result)
 										{
-											text:name,
-											position:info.path[0],
-											zIndex:60 - p2,
+											if (!result.lineInfo)
+												return;
+										
+											var info = result.lineInfo[0];
+											//console.log(status, result);
+											if (parseInt(info.status) != 1)
+												return;
+											//console.log(info);
+											var name = CutName(info.name);
+											//console.log(name);
+											if (name.length > 15 || info.company.length < 2)
+												return;
+											//var p1 = parseInt(info.basic_price);
+											//if (p1 == 0)
+											//	return;
+											var p2 = parseInt(info.total_price);
+											//if (p2 == 0)
+											//	return;
+											var color = "#ff0000";
+											if (p2 == 0)
+												p2 = 20;
+											if (p2 <= 4)
+												color = "#aa00aa";
+											if (p2 <= 3)
+												color = "#0000ff";
+											if (p2 <= 2)
+												color = "#00aaaa";
+											if (p2 <= 1)
+												color = "#00ff00";
+												
+											var poly = new AMap.Polyline(
+											{
+												path:info.path,
+												strokeColor: color,
+												strokeOpacity: 0.8,
+												zIndex:60 - p2,
+											});
+											poly.setMap(map);
+											var text = new AMap.Text(
+											{
+												text:name,
+												position:info.path[0],
+												zIndex:60 - p2,
+											});
+											text.setMap(map);
+											//console.log(info, info.name, name);//, info.basic_price, info.total_price);
 										});
-										text.setMap(map);
-										//console.log(info, info.name, name);//, info.basic_price, info.total_price);
-									});
+									}
 								}
-							}
-						});
-					}
-				});
+							});
+						}
+					});
+				}
 			}
 			
 			function GetDis(point1, point2)
@@ -1522,8 +1531,8 @@
 										//console.log(status, result);
 										if (result.info == "OK")
 											town.center = result.geocodes[0].location;
-										else
-											console.log(status, town.name)
+										//else
+											//console.log(status, town.name)
 										
 										townIndex++;
 										GetTownPos();
@@ -1586,7 +1595,7 @@
 						//console.log(s);
 						if (!CoveredDistrict1[s] && mind < 3000 && paths[NowPath].subpaths[NowSubpath].type != 4)
 						{
-							console.log(s, mind, NowPath, NowSubpath, NowPoint);
+							//console.log(s, mind, NowPath, NowSubpath, NowPoint);
 							CoveredDistrict1[s] = 1;
 							CoveredDistrict2[CoveredDistrict2.length] = s;
 						}	
@@ -1674,7 +1683,7 @@
 						}
 					});
 					
-					console.log(next, paths[0].subpaths[NowSubpath].points.length);
+					//console.log(next, paths[0].subpaths[NowSubpath].points.length);
 					if (next < paths[0].subpaths[NowSubpath].points.length)
 					{
 						setTimeout(function(){Do20(next);}, 100);
