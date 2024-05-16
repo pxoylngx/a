@@ -8,7 +8,7 @@ var STANDARD_MAP_WIDTH = 956.2;
 MoveMarker = new AMap.Marker(
 {
 	position:map.getCenter(),
-	offset: new AMap.Pixel(-30, -30)
+	offset: new AMap.Pixel(-15, -15)
 })
 
 function MoveOnMap()
@@ -86,9 +86,9 @@ function MoveOnMap()
 					
 					var icon1 = new AMap.Icon(
 					{
-						size: new AMap.Size(60, 60),    // 图标尺寸
+						size: new AMap.Size(30, 30),    // 图标尺寸
 						image: "icon/cat" + paths[NowPath].subpaths[NowSubpath].type + ".png",
-						imageSize: new AMap.Size(60, 60),   // 根据所设置的大小拉伸或压缩图片
+						imageSize: new AMap.Size(30, 30),   // 根据所设置的大小拉伸或压缩图片
 					});
 					MoveMarker.setIcon(icon1);
 				}
