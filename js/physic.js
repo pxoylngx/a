@@ -1,4 +1,4 @@
-function GetSlowDownDis(v, acc)
+function GetSlowDownDis(v0, vt, acc)
 {
-	return (v * v) / (2 * acc);
+	return (v0 * v0 - vt * vt) / (2 * acc);
 }
