@@ -155,9 +155,25 @@ function GetAcc1(cat)
 function GetAcc2(cat)
 {
 	var toTarget = V2Minus(Fish.Pos, cat.Pos);
+	var speed = V2Length(cat.Speed);
+	var dot = 1;
+	if (speed > 1)
+		dot = V2Dot(toTarget, cat.Speed);
 	
-	var v1 = V2Times(V2Normal(toTarget), 0.8);
-	var v2 = V2Times(V2Normal(cat.Speed), 0.2);
-	console.log(v1,v2)
-	return V2Add(v1, v2);
+	var v1 = V2Normal(toTarget);
+	var v2 = V2Times(V2Normal(cat.Speed), -1);
+
+	//if (speed > 70 && dot < 0.998)
+	//	return v2;
+	//else
+	//	return v1;//
+	
+	if (dot > 0.998)
+		acc = v1;
+	else
+		return V2Add(V2Times(v1, 0.5), V2Times(v2, 0.5));
+	
+	return acc;
+	//console.log(v1,v2)
+	//return V2Add(v1, v2);
 }
