@@ -27,13 +27,11 @@
 				</select>
 				<input type=text id=RouteNumber style="width:50px;"/>
 				<input type=button value=新段 onclick="CreateSubpath(document.getElementById('type').value)"/>
-				<input type=button value=修改 onclick="SetParam()"/>
 				<input type=button value=删点 onclick="DeleteOne()" />
 				<input type=button value=清空 onclick="CleanMap()" />
 				<input type=button value=标记 onclick="ClickMarker()" />
 				<input type=button value=选择 onclick="PolyClickPoint(marker.getPosition())" />
 				<input type=button value=回家 onclick="BackHome()" />
-				<input type=button value=导航 onclick="GetRoad()" />
 				<input type=button value=保存 onclick="AutoNameAndSave()" />
 				<input type=button value=读取 onclick="SelectAndOpenDAT()" />
 			</p>
@@ -45,6 +43,8 @@
 				<input type=button value=输入 onclick="LoadDat()" style="font-size:50%"/>
 				<input type=button value="日期+" style="font-size:50%" onclick="AddDate(1)" />
 				<input type=button value="日期-" style="font-size:50%" onclick="AddDate(-1)" />
+				<input type=button value=修改 onclick="SetParam()" style="font-size:50%" />
+				<input type=button value=导航 onclick="GetRoad()"  style="font-size:50%" />
 				<input type=button value="探索" style="font-size:50%" onclick="DrawBus()" />
 				<input type=button value="卫星" style="font-size:50%" onclick="ButtonSatel()" />
 				<br>
@@ -136,6 +136,8 @@
 				map.setZoom(ZOOM_DRAW[subpath.type]);
 				map.panTo(point);
 				BackupString = null;
+				
+				GetRoad(true);
 			}
 			
 			function AddAPoint2(point)
@@ -363,7 +365,7 @@
 					if (NowPoint < 0) NowPoint = 0;
 					points.splice(NowPoint, 1);
 					NowPoint--;
-					if (NowPoint < 0) NowPoint = 0;
+					//if (NowPoint < 0) NowPoint = 0;
 				}
 				RedrawMap();
 				_add = false;
@@ -841,7 +843,7 @@
 			}
 			
 			var _add = true;
-			function GetRoad()
+			function GetRoad(mustTransfer, noBackup)
 			{
 				var path = paths[0];
 				var subpath = path.subpaths[NowSubpath];
@@ -921,7 +923,7 @@
 						}
 						var city1 = GetCity(result.regeocodes[0].addressComponent);
 						var city2 = GetCity(result.regeocodes[1].addressComponent);
-						if (subpath.text.length == 0)
+						if (subpath.text.length == 0 || mustTransfer)
 						{
 							var transfer = new AMap.Transfer(
 							{
@@ -1034,6 +1036,10 @@
 													document.getElementById("RouteNumber").value = lineName;
 													paths[0].subpaths[NowSubpath].text = lineName;
 													RedrawMap();
+													
+													if (j > 0)
+														GetRoad(false, true);
+													
 													return;
 												}
 											}
@@ -1080,7 +1086,8 @@
 													var s = lineInfo.name + ' ' + station.name + '-' + station2.name;
 													if (window.confirm(s))
 													{
-														Backup();
+														if (!noBackup)
+															Backup();
 														var d1 = d2 = 9999999999;
 														var p1 = p2 = -1;
 														var path = lineInfo.path;
@@ -1191,6 +1198,8 @@
 				map.setZoom(ZOOM_DRAW[subpath.type]);
 				map.panTo(point);
 				BackupString = null;
+				
+				GetRoad(true);				
 			}
 			
 			function DrawBus()
