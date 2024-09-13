@@ -45,6 +45,7 @@
 				<input type=button value="日期-" style="font-size:50%" onclick="AddDate(-1)" />
 				<input type=button value=修改 onclick="SetParam()" style="font-size:50%" />
 				<input type=button value=导航 onclick="GetRoad()"  style="font-size:50%" />
+				<input type=button value=直连 onclick="ClickMarker(false)"  style="font-size:50%" />
 				<input type=button value="探索" style="font-size:50%" onclick="DrawBus()" />
 				<input type=button value="卫星" style="font-size:50%" onclick="ButtonSatel()" />
 				<br>
@@ -128,7 +129,7 @@
 			var ZOOM_DRAW = {0:17, 1:15, 2:14, 3:11, 4:7, 5:15, 6:13};
 			var ZOOM_VIEW = {0:17, 1:15, 2:14, 3:11, 4:7, 5:12, 6:9};
 			
-			function AddAPoint(e)
+			function AddAPoint(e, getRoad = true)
 			{
 				var point = e.lnglat;
 				AddAPoint2(point);
@@ -137,7 +138,8 @@
 				map.panTo(point);
 				BackupString = null;
 				
-				GetRoad(true);
+				if (getRoad)
+					GetRoad(true);
 			}
 			
 			function AddAPoint2(point)
@@ -381,13 +383,13 @@
 				RedrawMap();
 			}
 			
-			function ClickMarker()
+			function ClickMarker(getRoad = true)
 			{
 				var e =
 				{
 					lnglat: map.getCenter()
 				};
-				AddAPoint(e);
+				AddAPoint(e, getRoad);
 			}
 			
 			function SaveDat()
