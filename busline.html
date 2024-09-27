@@ -611,8 +611,8 @@
 				//AMap.convertFrom([point.lng, point.lat], 'baidu', function (status, result)
 				var geo = new AMap.Geocoder(
 				{
-					//extensions:"all",
-					//radius:400,
+					extensions:"all",
+					radius:400,
 				});
 				
 				geo.getAddress(point, function(status, result)
@@ -621,107 +621,70 @@
 					if (status === 'complete' && result.info === 'OK')
 					{
 						var info = result.regeocode.addressComponent;
-						if (info.city == "")
-						{
-							info.city = info.province;
-						}
-						//console.log(result);
 						
-						var str = "";
-						var values = {};
-						var strs = [];
-
-						function Fill(i)
+						//console.log(result)
+						
+						var rid = 0;
+						while (rid < result.regeocode.roads.length)
 						{
-							str += info[LEVEL_TEXT[i]];
-							//console.log(str);
+							var road = result.regeocode.roads[rid].name;
+							if (road.indexOf("辅路") >= 0 || road.indexOf("高架") >= 0 || road.indexOf("隧道") >= 0 || road.indexOf("高速") >= 0)
+								result.regeocode.roads.splice(rid, 1);
+							else
+								rid++;
+						}
+												
+						if (result.regeocode.roads.length > 0)
+						{
+							info.test1 = result.regeocode.roads[0].name;
+							info.street = result.regeocode.roads[0].name;
+						}
+						else
+						{
+							info.test1 = null;
+							info.street = info.township;
+						}
+						
+						if (info.district == "")
+						{
+							info.district = info.city;
+						}
+						
+						info.test2 = null;
+						if (result.regeocode.pois != null)
+						{
+						console.log(result.regeocode.pois);
+							for (var poiID = 0; poiID < result.regeocode.pois.length; poiID++)
+							{
+								if (result.regeocode.pois[poiID].name.indexOf("(") >= 0)
+									result.regeocode.pois[poiID].name = result.regeocode.pois[poiID].name.substr(0, result.regeocode.pois[poiID].name.indexOf("("));
 							
-							var geo1 = new AMap.Geocoder(
-							{
-								//extensions:"all",
-								//radius:400,
-							});
-							geo1.getLocation(str, function(status, result)
-							{
-								//console.log(str, status, result);
-								if (result != null && result.geocodes != null)
-								{
-									var poi = result.geocodes[0];
-									//console.log(poi, i);
-									var loc = poi.location;
-									//p1 = point;p2 = loc;
-									var dis = GetDis(point, loc);
-									var a = 32 * Math.pow(0.6, i);
-									var b = 0.001;
-									var v = a - b * dis;
-									//console.log(a,b,v,LEVEL_TEXT[i]);
-									var cn = CutName(info[LEVEL_TEXT[i]]);
-									strs[strs.length] = cn;
-									values[strs[strs.length - 1]] = v;
+								if (result.regeocode.pois[poiID].name.length > 10)
+									continue;
+								if (result.regeocode.pois[poiID].name.indexOf("幼儿园") >= 0)
+									continue;
 									
-									var x = [point.lng - loc.lng, point.lat - loc.lat];
-									var a1 = 28 * Math.pow(0.6, i);
-									var b1 = 0.0005;
-									var c1 = 2;
-									for (var d = 0; d < DIR.length; d++)
-									{
-										var y = DIRV[d];
-										var cross = (x[0] * y[0] + x[1] * y[1]) / Math.sqrt(x[0] * x[0] + x[1] * x[1]);										
-										var v1 = a1 - b1 * dis - (1 - cross) * c1 * a1;
-										//console.log(a1, b1, c1, x, y, cross, v1);
-										strs[strs.length] = cn + DIR[d];
-										values[strs[strs.length - 1]] = v1;
-									}
-								}
-								
-								if (i < LEVEL_TEXT.length - 1)
+								var type = result.regeocode.pois[poiID].type;
+								if (type.indexOf("交通地名") >= 0 || type.indexOf("公园广场") >= 0 || type.indexOf("综合医院") >= 0 || type.indexOf("住宅小区") >= 0 || type.indexOf("普通地名") >= 0 || type.indexOf("自然地名") >= 0 || type.indexOf("政府机关") >= 0 || type.indexOf("机场") >= 0 || type.indexOf("火车站") >= 0 || type.indexOf("汽车站") >= 0 || type.indexOf("学校") >= 0 || type.indexOf("风景名胜") >= 0 || type.indexOf("购物中心") >= 0 || type.indexOf("综合体育馆") >= 0 || type.indexOf("产业园区") >= 0)
 								{
-									Fill(i + 1);
+									info.test2 = result.regeocode.pois[poiID].name;
+									//console.log(result.regeocode.pois[poiID]);
+									break;
 								}
-								else
-								{
-									Lines.forEach(function(l){
-										l.stations.forEach(function(s){
-											var dis = GetDis(s.point, point);
-											//console.log(s.name, dis);
-											if (values[s.name])
-											{	
-												if (dis > 300)
-													values[s.name] = -10000;
-												else
-													values[s.name] += 10000;
-											}
-										});										
-									});
-								
-									var maxValue = 0;
-									var maxText = "";
-									strs.forEach(function(v){
-										if (values[v] > maxValue)
-										{
-											maxValue = values[v];
-											maxText = v;
-										}									
-									});
-									//console.log(strs, values, maxText, maxValue);
-									info.test2 = maxText;
-									cb(info);
-								}
-							});
+							}
+						}
+						if (info.test2 == null)
+						{
+							if (result.regeocode.roads.length > 1)
+							{
+								info.test2 = info.test1 + result.regeocode.roads[1].name + "口";
+							}
+							//console.log(result.regeocode.pois);
 						}
 						
-						var id = 0;
-						if (info.province == "广东省")
-						{
-							str = "广东省";
-							id = 1;
-						}
-						if (info.city == "广州市")
-						{
-							str = "广东省广州市";
-							id = 2;
-						}
-						Fill(id);
+						info.lng = point.lng;
+						info.lat = point.lat;
+						cb(info);
 					}
 				});
 			}
