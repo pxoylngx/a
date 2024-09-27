@@ -213,7 +213,10 @@
 						policy:AMap.DrivingPolicy.LEAST_TIME
 					}); 
 				
-				return new AMap.Driving();
+				return new AMap.Driving(
+				{
+					policy:AMap.DrivingPolicy.LEAST_FEE
+				}); 
 			}
 			
 			function FixPath()
